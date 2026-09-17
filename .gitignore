@@ -1,0 +1,12 @@
+# per-machine learning data — never shared automatically
+learnings/local/*
+!learnings/local/.gitkeep
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+
+# local scratch
+job.json
+*.log

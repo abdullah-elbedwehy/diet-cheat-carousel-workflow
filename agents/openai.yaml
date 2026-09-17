@@ -1,0 +1,5 @@
+interface:
+  display_name: "Diet & Cheat Carousel"
+  short_description: "Parallel Arabic carousel slides from locked copy — OLD or NEW identity"
+  brand_color: "#F58A29"
+  default_prompt: "Use $diet-cheat-carousel-workflow. Identity: OLD. Slide 1: ... Slide 2: ..."
