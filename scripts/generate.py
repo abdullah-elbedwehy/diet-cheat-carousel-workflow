@@ -19,7 +19,6 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
-import os
 import re
 import shutil
 import subprocess
@@ -43,6 +42,7 @@ HARD RULES
 - Generate exactly ONE image, exactly ONE image_gen call. Do not inspect, critique, validate, compare, or regenerate the result. A human reviews later.
 - Portrait orientation, {generate_size} pixels.
 - Save the generated file at exactly this path (relative to the working directory): {relative_out}
+- The built-in tool writes its output under $CODEX_HOME/generated_images/<session>/*.png. Copy that file (cp) to the path above.
 - After saving, print exactly one line and nothing else after it:
 SAVED: <absolute path>
 - Do not create any other files. Do not modify the attached reference images.
@@ -404,9 +404,9 @@ def print_table(manifest: dict) -> None:
     print()
     print(f"Output: {manifest['output_dir']}")
     print()
-    print(f"{'slide':<7}{'status':<12}{'source':<12}{'final':<12}{'sec':<8}error")
+    print(f"{'slide':<7}{'status':<24}{'source':<12}{'final':<12}{'sec':<8}error")
     for r in manifest["slides"]:
-        print(f"{r['n']:02d}     {r['status']:<12}{(r.get('source_dims') or '-'):<12}"
+        print(f"{r['n']:02d}     {r['status']:<24}{(r.get('source_dims') or '-'):<12}"
               f"{(r.get('final_dims') or '-'):<12}{r.get('seconds', 0):<8}{r.get('error') or ''}")
     print()
 
