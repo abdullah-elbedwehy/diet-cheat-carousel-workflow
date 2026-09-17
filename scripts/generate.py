@@ -442,6 +442,7 @@ def main() -> int:
         "identity": job["identity"], "topic_slug": job["topic_slug"], "output_dir": str(out_dir),
         "slides": [], "history": [],
     }
+    manifest["output_dir"] = str(out_dir)
 
     only = None
     if args.only:
