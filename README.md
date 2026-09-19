@@ -30,6 +30,16 @@ Slide 3: ...
 
 الناتج: `~/Downloads/DC-OLD-<topic>-<date>/`
 
+التشغيل مرحلتين إجباريًا: الأول preview من غير أي توليد، وبعد موافقة صريحة فقط يبدأ التوليد:
+
+```bash
+python3 scripts/generate.py job.json --dry-run
+python3 scripts/generate.py job.json --yes   # بعد go صريحة فقط
+```
+
+غياب `--yes` يوقف عند approval gate ويفتح صفر workers. الـagent لا يمرر
+`--yes` من نفسه، ونفس البوابة تنطبق على `--only` regeneration.
+
 ```
 slides/      ← النهائي بالمقاس الحرفي في job.size.deliver
 source/      ← الخام من الموديل
@@ -76,9 +86,9 @@ python3 scripts/learn.py promote         # (للمشرف) نقل المحلي ل
 
 | Script | Purpose |
 |---|---|
-| `scripts/generate.py job.json` | يشغّل worker لكل سلايد بالتوازي، يصدّر المقاس المعلن بالظبط، يعمل flatten وفحوص ميكانيكية، ويكتب manifest |
-| `scripts/generate.py job.json --only 2,4 --output-dir <dir>` | إعادة توليد سلايدات محددة |
-| `scripts/generate.py job.json --dry-run` | يكتب البرومبتات من غير توليد |
+| `scripts/generate.py job.json --dry-run` | يكتب approval preview والبرومبتات، من غير أي worker أو توليد |
+| `scripts/generate.py job.json --yes` | بعد موافقة صريحة: يشغّل كل workers بالتوازي ويصدّر ويفحص |
+| `scripts/generate.py job.json --only 2,4 --output-dir <dir> --yes` | إعادة توليد سلايدات وافق عليها المستخدم |
 | `scripts/verify_run.py <output-dir>` | يثبت إن الرن خرج من الـrunner وإن dispatch timing صالح |
 | `scripts/validate.py job.json --output-dir <dir>` | يفحص المقاس، RGB/no-alpha، الخلفية، شيلد REF-01، وguillemets |
 | `scripts/learn.py` | إدارة الدروس |
@@ -108,9 +118,9 @@ python3 scripts/learn.py promote         # (للمشرف) نقل المحلي ل
 
 ## Job schema 2
 
-كل slide لازم يسجل `intent`، `subject`، `visual`، و`copy` منفصلين. الـregeneration يحافظ على `intent` و`subject`; تغيير الـsubject مسموح فقط لما `regeneration.failure_class` يساوي `object`.
+كل slide لازم يسجل `number`، `intent`، `subject`، `visual`، و`copy` منفصلين. الـregeneration يحافظ على `number` و`intent` و`copy`، ويحافظ على `subject` إلا لما `regeneration.failure_class` يساوي `object`.
 
-Gold rule structural: جزء صغير من object فقط — dot، tip، handle، rung، step، band. Whole gold object يوقف الـbuild قبل أي generation.
+قاعدة الـgold المعيارية موجودة مرة واحدة في `references/render-spec.md`؛ أمثلة النجاح والفشل موجودة في `references/compositions.md`. Whole gold object يوقف الـbuild قبل أي generation.
 
 Evidence: [before crop](docs/evidence/first-week-fatigue-slide01-before.png), [after crop](docs/evidence/first-week-fatigue-slide01-after.png), and [mechanical evidence JSON](docs/evidence/first-week-fatigue-evidence.json).
 

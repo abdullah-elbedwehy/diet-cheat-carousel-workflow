@@ -32,5 +32,5 @@ Failed assignments:
 - a whole staircase;
 - a whole organ.
 
-Gold is always a small part of the named object. If a scene line makes the
-object itself gold, rewrite the scene before prompt construction.
+These are reviewed examples, not a second rule definition. The normative gold
+rule lives only in `references/render-spec.md`.

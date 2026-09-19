@@ -5,6 +5,7 @@ Format: see `references/learning.md`. One `## L-...` block per lesson.
 ## L-20260915-001
 - date: 2026-09-15
 - identity: BOTH
+- class: text-rendering
 - status: active
 - trigger: slide 1 and slide 6 rendered `الـFormula` and `وPolyphenols` reversed or broken
 - pattern: Latin technical token glued to an Arabic prefix (الـ / و) inside an Arabic line
@@ -13,14 +14,16 @@ Format: see `references/learning.md`. One `## L-...` block per lesson.
 ## L-20260915-002
 - date: 2026-09-15
 - identity: OLD
+- class: identity
 - status: active
 - trigger: slide 3 duplicated the shield logo onto the supplement tub
 - pattern: anonymous product container next to a logo reference
-- rule: Place the identity mark exactly once, top-right, on the background layer only. Product containers stay blank matte black with no logo, label, or text.
+- rule: Place the OLD shield exactly once in the fixed slot defined by references/render-spec.md, on the background layer only. Product containers stay blank matte black with no logo, label, or text.
 
 ## L-20260915-003
 - date: 2026-09-15
 - identity: BOTH
+- class: text-rendering
 - status: active
 - trigger: slide 5 invented label text on the supplement tub
 - pattern: product object with a large flat surface
@@ -29,6 +32,7 @@ Format: see `references/learning.md`. One `## L-...` block per lesson.
 ## L-20260915-004
 - date: 2026-09-15
 - identity: BOTH
+- class: composition
 - status: active
 - trigger: energy-drink cans appeared instead of a supplement tub on slide 4
 - pattern: copy mentions مشروبات الطاقة while the set's object is a pre-workout tub

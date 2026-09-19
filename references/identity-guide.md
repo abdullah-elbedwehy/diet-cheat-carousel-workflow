@@ -13,9 +13,9 @@ Palette
 - Warning / heavy emphasis / "higher" side: gold-orange `#F2A33A`.
 - Positive / smart / "better" side: cyan-blue `#4FB3E8`.
 - Restrained burgundy `#5A1F2B` only for risk panels.
-- Decoration: sparse thin angular gold lines at corners, low glow, matte surfaces.
+- Decoration colors and assets are defined here; all treatment and fixed geometry are defined only in `render-spec.md`.
 
-Logo: white shield, once, top-right corner, ~8% of width, clear safe space. Never on products, never duplicated, never recolored.
+Logo: exact white shield asset, once. Its placement and size are defined only in `render-spec.md`. Never on products, never duplicated, never recolored.
 
 ## NEW — hands and heart
 
@@ -33,7 +33,7 @@ Logo: white hands with orange heart, once, top-right, ~8% width. No fake wordmar
 
 ## Shared visual language (both)
 
-- Photoreal hero object(s): food / drink / product on a matte black plate or surface, top-down or 3/4, warm key light, cinematic but clean.
+- Illustration treatment and all fixed layout geometry come only from `render-spec.md`; this identity guide does not override them.
 - One dominant hook in bold geometric Arabic display type; secondary lines lighter; numbers large and clean.
 - Accent-colored word inside the headline for the key term (as in `الفرق هنا في الزيت والتغطية` → `الزيت والتغطية` in gold).
 - Prefer negative space to boxes. Decoration lives at corners and under the information layer.

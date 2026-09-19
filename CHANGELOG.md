@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.3.0 — 2026-09-19
+
+- **Runtime wiring gap:** 1.2.0 shipped the numeric render contract, schema-2 meaning fields, mechanical validator, and dispatch verifier, but `SKILL.md` did not require the agent to read or execute them. The skill now names every load-bearing file, inserts `render-spec.md` byte-for-byte, requires separate number/intent/subject/visual/copy fields, validates before reporting, and checks the complete runner artifact set.
+- **Runner bypass:** image generation could start outside the canonical dispatcher. The first hard rule now permits only `scripts/generate.py`; the executable itself is fail-closed and dispatches zero workers unless `--yes` is explicitly supplied.
+- **Missing approval gate:** generation previously began immediately. Every new run and `--only` regeneration now has a dry-run preview phase and an explicit-go phase. A missing `--yes` halts at the same gate; `--yes` is off by default.
+- **Regeneration drift:** runtime instructions mentioned only rewriting `visual`. The skill now locks number, copy, and intent; locks subject unless `failure_class` is exactly `object`; and states that mechanical retries reuse all meaning and scene fields unchanged.
+- **Broken lesson command:** `SKILL.md` needed a required lesson class, but `learn.py` had no such argument. `learn.py add` now requires `--class`, stores it in lesson blocks, and remains backward-readable for pre-1.3 lessons.
+- **Conflicting sources:** an old fixed `1080x1440` delivery default and top-right OLD shield instructions competed with schema-2 delivery and `render-spec.md`. Delivery is now required from `job.size.deliver`; OLD shield geometry and gold policy defer to `render-spec.md`; historical dimensions are explicitly labeled as evidence, not active rules.
+- Added seven-slide approval-gate tests proving byte-identical shared contracts and distinct number/intent/subject fields, plus a validator integration test proving wrong-size and shield-less rasters fail.
+
 ## 1.2.0 — 2026-09-19
 
 - **Wrong export size:** shipped rasters remained `1122x1402`. Cause: the crop branch resized its destination in place, which did not reliably produce the requested pixels. Export now uses distinct crop and resize files, reads the delivered dimensions back, and hard-fails on any mismatch. Square, tall, and wide source tests assert exact `job.size.deliver` output.

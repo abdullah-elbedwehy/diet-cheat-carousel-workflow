@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Parallel slide generator for the Diet & Cheat carousel workflow.
+"""Approval-gated parallel generator for the Diet & Cheat carousel workflow.
 
 Reads a job.json (written by the agent), spawns one `codex exec` worker per
 slide concurrently, exports each result to the delivery size with macOS `sips`,
@@ -8,8 +8,8 @@ runs mechanical checks only, and writes a manifest + review checklist.
 No visual review happens here or in the workers. The user reviews.
 
 Usage:
-    generate.py JOB.json [--only 2,4] [--concurrency N] [--dry-run]
-                          [--timeout SEC] [--no-export]
+    generate.py JOB.json [--only 2,4] [--dry-run] [--yes]
+                          [--concurrency N] [--timeout SEC] [--no-export]
 
 Requires: python3 (stdlib only), macOS `sips`, Codex CLI logged in.
 """
@@ -42,7 +42,6 @@ from image_processing import flatten_background, image_info
 JOB_SCHEMA_VERSION = 2
 DEFAULT_TIMEOUT_SEC = 900
 DEFAULT_GENERATE_SIZE = "1024x1536"
-DEFAULT_DELIVER_SIZE = "1080x1440"
 DEFAULT_BACKGROUNDS = {"OLD": "#12181D", "NEW": "#091521"}
 DEFAULT_BACKGROUND_TOLERANCE = 12
 SAVED_LINE = re.compile(r"^\s*SAVED:\s*(.+?)\s*$", re.MULTILINE)
@@ -65,9 +64,13 @@ SAVED: <absolute path>
 ATTACHED IMAGES
 {ref_lines}
 
-{shared_contract}
+BEGIN BYTE-IDENTICAL SHARED CONTRACT
+{shared_contract}END BYTE-IDENTICAL SHARED CONTRACT
 
 SLIDE {n} OF {total} — role: {role}
+
+NUMBER STRING TO RENDER VERBATIM
+{number}
 
 VISUAL DIRECTION
 {visual}
@@ -141,9 +144,9 @@ def load_job(path: Path) -> dict:
     job["topic_slug"] = slugify(str(job.get("topic_slug", "")))
     if not isinstance(job.get("shared_contract"), str) or not job["shared_contract"].strip():
         die("job.shared_contract must be a non-empty string")
-    render_spec = (SKILL_ROOT / "references" / "render-spec.md").read_text(encoding="utf-8").strip("\n")
-    if render_spec not in job["shared_contract"]:
-        die("job.shared_contract must contain references/render-spec.md verbatim")
+    render_spec = (SKILL_ROOT / "references" / "render-spec.md").read_text(encoding="utf-8")
+    if not job["shared_contract"].startswith(render_spec):
+        die("job.shared_contract must start with references/render-spec.md byte-for-byte")
     slides = job.get("slides")
     if not isinstance(slides, list) or not slides:
         die("job.slides must be a non-empty list")
@@ -155,7 +158,7 @@ def load_job(path: Path) -> dict:
         if n in seen:
             die(f"duplicate slide n={n}")
         seen.add(n)
-        for key in ("role", "intent", "subject", "copy", "visual"):
+        for key in ("role", "number", "intent", "subject", "copy", "visual"):
             if not isinstance(s.get(key), str) or not s[key].strip():
                 die(f"slide {n}: '{key}' must be a non-empty string")
         if "\n" in s["visual"].strip():
@@ -164,7 +167,8 @@ def load_job(path: Path) -> dict:
     slides.sort(key=lambda s: s["n"])
     size = job.setdefault("size", {})
     size.setdefault("generate", DEFAULT_GENERATE_SIZE)
-    size.setdefault("deliver", DEFAULT_DELIVER_SIZE)
+    if not isinstance(size.get("deliver"), str) or not size["deliver"].strip():
+        die("job.size.deliver must be an explicit WxH string")
     parse_size(size["generate"])
     parse_size(size["deliver"])
     background = job.setdefault("background", {})
@@ -237,10 +241,11 @@ def build_prompt(job: dict, slide: dict, total: int, relative_out: str, refs: li
         generate_size=job["size"]["generate"],
         relative_out=relative_out,
         ref_lines=ref_lines,
-        shared_contract=job["shared_contract"].strip(),
+        shared_contract=job["shared_contract"],
         n=slide["n"],
         total=total,
         role=slide["role"],
+        number=slide["number"].strip(),
         visual=slide["visual"].strip(),
         intent=slide["intent"].strip(),
         subject=slide["subject"].strip(),
@@ -532,6 +537,10 @@ def enforce_regeneration_lock(prior_job: dict | None, job: dict, selected: list[
         failure_class = str(regeneration.get("failure_class") or "").strip()
         if slide["intent"] != prior.get("intent"):
             die(f"slide {slide['n']}: regeneration may not change intent")
+        if slide["number"] != prior.get("number"):
+            die(f"slide {slide['n']}: regeneration may not change the number string")
+        if slide["copy"] != prior.get("copy"):
+            die(f"slide {slide['n']}: regeneration may not change locked copy")
         if slide["subject"] != prior.get("subject") and failure_class != "object":
             die(
                 f"slide {slide['n']}: named object changed from {prior.get('subject')!r} to {slide['subject']!r}; "
@@ -545,7 +554,7 @@ def write_brief_and_prompts(out_dir: Path, job: dict, refs: list[Path]) -> None:
     for s in job["slides"]:
         lines += [
             f"## Slide {s['n']:02d} — {s['role']}", "",
-            f"Intent: {s['intent']}", "", f"Named object: {s['subject']}", "",
+            f"Number string: {s['number']}", "", f"Intent: {s['intent']}", "", f"Named object: {s['subject']}", "",
             "```text", s["copy"].strip("\n"), "```", "",
         ]
     (out_dir / "brief.md").write_text("\n".join(lines), encoding="utf-8")
@@ -556,7 +565,8 @@ def write_brief_and_prompts(out_dir: Path, job: dict, refs: list[Path]) -> None:
     p += [f"- `{r.name}`" for r in refs] or ["- (none)"]
     p += ["", "## Shared contract", "", job["shared_contract"].strip(), ""]
     for s in job["slides"]:
-        p += [f"## Slide {s['n']:02d} — {s['role']}", "", "### Intent", "", s["intent"].strip(), "",
+        p += [f"## Slide {s['n']:02d} — {s['role']}", "", "### Number string", "", s["number"].strip(), "",
+              "### Intent", "", s["intent"].strip(), "",
               "### Named object", "", s["subject"].strip(), "", "### Visual", "", s["visual"].strip(), "",
               "### Copy (verbatim)", "", "```text", s["copy"].strip("\n"), "```", ""]
     (out_dir / "prompts.md").write_text("\n".join(p), encoding="utf-8")
@@ -721,7 +731,12 @@ def main() -> int:
     ap.add_argument("--concurrency", type=int, default=0, help="max parallel workers (0 = all)")
     ap.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT_SEC, help="seconds per worker attempt")
     ap.add_argument("--mechanical-retries", type=int, default=1, help="whole-slide retry batches after validation failure")
-    ap.add_argument("--dry-run", action="store_true", help="write prompts/logs, run nothing")
+    ap.add_argument("--dry-run", action="store_true", help="write the approval preview; dispatch no workers")
+    ap.add_argument(
+        "--yes",
+        action="store_true",
+        help="non-interactive approval; dispatch workers (off by default)",
+    )
     ap.add_argument("--no-export", action="store_true", help="skip sips export to delivery size")
     ap.add_argument("--no-validate", action="store_true", help="skip mechanical validation and automatic retry")
     ap.add_argument("--output-dir", type=Path, help="override output folder (default: ~/Downloads/DC-...)")
@@ -729,13 +744,10 @@ def main() -> int:
 
     if args.no_export and not args.no_validate:
         die("--no-export requires --no-validate")
+    if args.dry_run and args.yes:
+        die("--dry-run and --yes are mutually exclusive")
     if args.mechanical_retries < 0:
         die("--mechanical-retries must be >= 0")
-
-    if shutil.which("codex") is None and not args.dry_run:
-        die("codex CLI not found on PATH")
-    if shutil.which("sips") is None and not args.no_export:
-        die("sips not found — this runner needs macOS")
 
     job = load_job(args.job)
     refs = [resolve_ref(r) for r in job["refs"]]
@@ -747,17 +759,12 @@ def main() -> int:
     job["output_dir"] = str(out_dir)
 
     prior_job_path = out_dir / "job.json"
+    approved_job_path = out_dir / "approved-job.json"
     try:
-        prior_job = json.loads(prior_job_path.read_text(encoding="utf-8"))
+        baseline_path = approved_job_path if approved_job_path.is_file() else prior_job_path
+        prior_job = json.loads(baseline_path.read_text(encoding="utf-8"))
     except (FileNotFoundError, json.JSONDecodeError):
         prior_job = None
-
-    manifest_path = out_dir / "manifest.json"
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.is_file() else {
-        "identity": job["identity"], "topic_slug": job["topic_slug"], "output_dir": str(out_dir),
-        "slides": [], "history": [],
-    }
-    manifest["output_dir"] = str(out_dir)
 
     only = None
     if args.only:
@@ -769,15 +776,64 @@ def main() -> int:
         missing = [n for n in only if n not in known]
         if missing:
             die(f"--only names slides not in job: {missing}")
-    manifest["only"] = only
-
     selected = [s for s in job["slides"] if only is None or s["n"] in only]
     enforce_regeneration_lock(prior_job, job, selected, only)
+    if prior_job is not None and not approved_job_path.is_file():
+        approved_job_path.write_text(
+            json.dumps(prior_job, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
     prior_job_path.write_text(json.dumps(job, ensure_ascii=False, indent=2), encoding="utf-8")
+    write_brief_and_prompts(out_dir, job, refs)
+
+    # A missing --yes is intentionally the same safe state as --dry-run. This
+    # is the executable approval gate, not merely an agent instruction.
+    if args.dry_run or not args.yes:
+        preview = {
+            "identity": job["identity"],
+            "topic_slug": job["topic_slug"],
+            "output_dir": str(out_dir),
+            "approval": "pending",
+            "workers_dispatched": 0,
+            "only": only,
+            "slides": [
+                {
+                    "n": slide["n"],
+                    "number": slide["number"],
+                    "intent": slide["intent"],
+                    "subject": slide["subject"],
+                    "status": "approval-pending",
+                }
+                for slide in selected
+            ],
+        }
+        (out_dir / "preview-manifest.json").write_text(
+            json.dumps(preview, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+        print(f"Approval preview: {out_dir}")
+        for slide in selected:
+            print(
+                f"slide {slide['n']:02d} | {slide['number']} | "
+                f"intent={slide['intent']} | subject={slide['subject']}"
+            )
+        print("Approval gate active: 0 workers dispatched; no image generation ran.")
+        print("Waiting for explicit go-ahead.")
+        return 0
+
+    if shutil.which("codex") is None:
+        die("codex CLI not found on PATH")
+    if shutil.which("sips") is None and not args.no_export:
+        die("sips not found — this runner needs macOS")
+
+    manifest_path = out_dir / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.is_file() else {
+        "identity": job["identity"], "topic_slug": job["topic_slug"], "output_dir": str(out_dir),
+        "slides": [], "history": [],
+    }
+    manifest["output_dir"] = str(out_dir)
+    manifest["only"] = only
+    manifest["approval"] = "approved-via---yes"
     for s in selected:
         archive_previous(out_dir, job, s["n"], manifest)
-
-    write_brief_and_prompts(out_dir, job, refs)
 
     manifest["started_at"] = iso_now()
     deliver = parse_size(job["size"]["deliver"])
@@ -797,7 +853,7 @@ def main() -> int:
             f"r{generation_round}-{uuid.uuid4().hex[:8]}"
         )
         workers = [
-            Worker(job, slide, total, out_dir, refs, args.timeout, args.dry_run, run_id, generation_round)
+            Worker(job, slide, total, out_dir, refs, args.timeout, False, run_id, generation_round)
             for slide in pending
         ]
         limit = min(args.concurrency, len(workers)) if args.concurrency > 0 else len(workers)
@@ -843,8 +899,8 @@ def main() -> int:
                 result["status"] = "delivered-unexported"
             results_by_number[worker.n] = result
 
-        dispatches.append(build_dispatch(run_id, workers, args.concurrency, limit, args.dry_run))
-        if args.dry_run or args.no_validate:
+        dispatches.append(build_dispatch(run_id, workers, args.concurrency, limit, False))
+        if args.no_validate:
             pending = []
             break
 
@@ -891,15 +947,12 @@ def main() -> int:
     manifest["retry_dispatches"] = dispatches[1:]
     manifest["validation"] = validation_report
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
-    if args.dry_run or args.no_validate:
+    if args.no_validate:
         write_review(out_dir, job, manifest)
     prepend_dispatch_summary(out_dir, dispatches)
-    if not args.dry_run:
-        append_run_log(job, manifest)
+    append_run_log(job, manifest)
 
     verify_cmd = [sys.executable, str(SKILL_ROOT / "scripts" / "verify_run.py"), str(out_dir)]
-    if args.dry_run:
-        verify_cmd.append("--dry-run")
     verification = subprocess.run(verify_cmd, capture_output=True, text=True)
     (out_dir / "logs" / "run-verification.log").write_text(
         verification.stdout + verification.stderr, encoding="utf-8"
@@ -915,7 +968,12 @@ def main() -> int:
         if result["status"] in {"failed", "export-failed", "mechanical-failed"}
     ]
     dispatch_failed = any(not dispatch["guard_pass"] for dispatch in dispatches)
-    return 1 if failed or dispatch_failed or verification.returncode or validation_code else 0
+    passed = not (failed or dispatch_failed or verification.returncode or validation_code)
+    if passed:
+        approved_job_path.write_text(
+            json.dumps(job, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+    return 0 if passed else 1
 
 
 if __name__ == "__main__":

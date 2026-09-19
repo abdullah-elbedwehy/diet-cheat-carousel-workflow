@@ -13,10 +13,14 @@ Do not record: praise, one-off content changes, requests that are already covere
 ```
 python3 <skill>/scripts/learn.py add \
   --identity OLD|NEW|BOTH \
+  --class text-rendering|geometry|colour|identity|composition|output-format \
   --trigger "what the user said" \
   --pattern "what in the copy/prompt caused it (generalized)" \
   --rule "one imperative instruction to add to the shared contract next time"
 ```
+`--class` is required for every new lesson. Lessons from before schema 1.3 are
+read as `composition` until they are curated.
+
 Rule quality: specific, testable, phrased for the image model. Bad: "make Arabic better". Good: "Render Latin tokens that follow the Arabic prefix الـ on their own line; never inline them inside an Arabic sentence."
 
 ## How lessons are used

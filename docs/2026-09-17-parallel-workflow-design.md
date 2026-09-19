@@ -3,7 +3,7 @@
 Date: 2026-09-17. Status: approved.
 
 ## Goal
-User supplies identity + final slide copy. Skill converts to per-slide prompts, generates all slides in parallel, exports to 1080x1440, saves to `~/Downloads/DC-<ID>-<slug>-<stamp>/`, reports the path. No AI visual review. Learns from user feedback. Self-updates from a public repo.
+User supplies identity + final slide copy. Skill converts to per-slide prompts, generates all slides in parallel after an explicit approval gate, exports to the exact size declared by `job.size.deliver`, saves to `~/Downloads/DC-<ID>-<slug>-<stamp>/`, validates mechanically, then reports the path. No AI visual review. Learns from user feedback. Self-updates from a public repo.
 
 ## Decisions
 - Runtime: Codex CLI / app. Skill installed at `~/.codex/skills/diet-cheat-carousel-workflow` as a git clone.
@@ -11,7 +11,7 @@ User supplies identity + final slide copy. Skill converts to per-slide prompts, 
 - Copy lock: on-image text verbatim. Intelligence only in composition / object / hierarchy choice.
 - Learning: structured lesson blocks. `learnings/shared/lessons.md` in git (maintainer-curated), `learnings/local/lessons.md` gitignored. Every run injects active rules into the shared contract. Feedback → `learn.py add`. Maintainer → `learn.py promote` → commit → push.
 - Repo scope: skill only at repo root. ChatGPT GPT path dropped (cannot write Downloads, pull git, or guarantee parallel).
-- Export: macOS `sips`, centered 3:4 crop + resize. Only post-generation step.
+- Export: macOS `sips`, centered whole-raster crop + resize to `job.size.deliver`, followed by deterministic near-background flattening and mechanical validation.
 - Regenerate: `--only N --output-dir <same>`; previous files to `history/`.
 
 ## Components
@@ -35,6 +35,6 @@ brief → (agent) job.json → generate.py → `source/*.png` → sips → `slid
 
 ## Testing
 - `generate.py --dry-run` on a 2-slide job: prompts written, no codex calls.
-- Real 2-slide run: two workers start within the same second, both files land, dims 1080x1440.
+- Historical 1.0 test fixture: two workers started within the same second and both files landed at the then-job's declared `1080x1440`. This is evidence, not a current size rule.
 - `learn.py add/list/retire/promote` round trip.
 - `update.sh` on a clean clone.

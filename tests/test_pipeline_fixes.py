@@ -123,14 +123,19 @@ class PromptPreflightTests(unittest.TestCase):
             GENERATE.validate_gold_assignment({"n": 2, "visual": "A whole gold balloon fills the band."})
 
     def test_regeneration_preserves_intent_and_named_object(self) -> None:
-        prior = {"slides": [{"n": 1, "intent": "show a sudden drop", "subject": "line chart"}]}
+        prior = {"slides": [{
+            "n": 1, "number": "01 / 07", "intent": "show a sudden drop",
+            "subject": "line chart", "copy": "النص",
+        }]}
         valid = [{
-            "n": 1, "intent": "show a sudden drop", "subject": "line chart",
+            "n": 1, "number": "01 / 07", "intent": "show a sudden drop",
+            "subject": "line chart", "copy": "النص",
             "regeneration": {"reason": "quote orientation", "failure_class": "text-rendering"},
         }]
         GENERATE.enforce_regeneration_lock(prior, {}, valid, [1])
         changed = [{
-            "n": 1, "intent": "show a sudden drop", "subject": "chair and suitcase",
+            "n": 1, "number": "01 / 07", "intent": "show a sudden drop",
+            "subject": "chair and suitcase", "copy": "النص",
             "regeneration": {"reason": "quote orientation", "failure_class": "text-rendering"},
         }]
         with self.assertRaises(SystemExit):
@@ -139,7 +144,7 @@ class PromptPreflightTests(unittest.TestCase):
     def test_schema_two_prompt_records_intent_and_subject(self) -> None:
         with tempfile.TemporaryDirectory(prefix="dc-job-test-") as temp:
             path = Path(temp) / "job.json"
-            render_spec = (ROOT / "references" / "render-spec.md").read_text(encoding="utf-8").strip("\n")
+            render_spec = (ROOT / "references" / "render-spec.md").read_text(encoding="utf-8")
             payload = {
                 "schema": 2,
                 "identity": "OLD",
@@ -149,6 +154,7 @@ class PromptPreflightTests(unittest.TestCase):
                 "size": {"generate": "1024x1536", "deliver": "1080x1350"},
                 "slides": [{
                     "n": 1,
+                    "number": "01 / 01",
                     "role": "hook",
                     "intent": "show the early break",
                     "subject": "line chart",
@@ -161,6 +167,7 @@ class PromptPreflightTests(unittest.TestCase):
             prompt = GENERATE.build_prompt(job, job["slides"][0], 1, "./slide.png", [])
             self.assertIn("show the early break", prompt)
             self.assertIn("line chart", prompt)
+            self.assertIn("01 / 01", prompt)
 
 
 if __name__ == "__main__":

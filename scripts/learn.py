@@ -10,13 +10,14 @@ Block format (one per lesson):
     ## L-20260917-001
     - date: 2026-09-17
     - identity: OLD | NEW | BOTH
+    - class: text-rendering | geometry | colour | identity | composition | output-format
     - status: active | retired
     - trigger: what the user said, verbatim or close
     - pattern: what in the copy / prompt caused it
     - rule: the instruction to inject into the shared contract next time
 
 Usage:
-    learn.py add --identity OLD --trigger "..." --pattern "..." --rule "..."
+    learn.py add --identity OLD --class geometry --trigger "..." --pattern "..." --rule "..."
     learn.py list [--identity OLD|NEW] [--all] [--json] [--rules-only]
     learn.py retire L-20260917-001
     learn.py promote            # move active local lessons into shared (maintainer)
@@ -36,9 +37,10 @@ SKILL_ROOT = Path(__file__).resolve().parent.parent
 SHARED = SKILL_ROOT / "learnings" / "shared" / "lessons.md"
 LOCAL = SKILL_ROOT / "learnings" / "local" / "lessons.md"
 RUNS = SKILL_ROOT / "learnings" / "local" / "runs.jsonl"
-FIELDS = ("date", "identity", "status", "trigger", "pattern", "rule")
+FIELDS = ("date", "identity", "class", "status", "trigger", "pattern", "rule")
 IDENTITIES = {"OLD", "NEW", "BOTH"}
 STATUSES = {"active", "retired"}
+CLASSES = {"text-rendering", "geometry", "colour", "identity", "composition", "output-format"}
 BLOCK_RE = re.compile(r"^## (L-\d{8}-\d{3})\s*$", re.MULTILINE)
 FIELD_RE = re.compile(r"^- (\w+):\s*(.*)$")
 
@@ -61,6 +63,9 @@ def parse_file(path: Path, source: str) -> list[dict]:
             fm = FIELD_RE.match(line.strip())
             if fm and fm.group(1) in FIELDS:
                 lesson[fm.group(1)] = fm.group(2).strip()
+        # Local lessons written before schema 1.3 remain readable. New lessons
+        # cannot omit the required class.
+        lesson.setdefault("class", "composition")
         missing = [f for f in FIELDS if f not in lesson]
         if missing:
             print(f"WARN: {source} lesson {lesson['id']} missing {missing}; skipped", file=sys.stderr)
@@ -114,6 +119,7 @@ def cmd_add(args: argparse.Namespace) -> int:
         "source": "local",
         "date": dt.date.today().isoformat(),
         "identity": identity,
+        "class": args.lesson_class,
         "status": "active",
         "trigger": one_line(args.trigger, "trigger"),
         "pattern": one_line(args.pattern, "pattern"),
@@ -143,7 +149,10 @@ def cmd_list(args: argparse.Namespace) -> int:
         print("(no lessons)")
         return 0
     for l in lessons:
-        print(f"{l['id']}  {l['identity']:<4} {l['status']:<8} ({l['source']})")
+        print(
+            f"{l['id']}  {l['identity']:<4} {l['class']:<15} "
+            f"{l['status']:<8} ({l['source']})"
+        )
         print(f"  trigger: {l['trigger']}")
         print(f"  pattern: {l['pattern']}")
         print(f"  rule:    {l['rule']}")
@@ -211,6 +220,7 @@ def main() -> int:
 
     a = sub.add_parser("add", help="record a new local lesson")
     a.add_argument("--identity", required=True)
+    a.add_argument("--class", dest="lesson_class", required=True, choices=sorted(CLASSES))
     a.add_argument("--trigger", required=True)
     a.add_argument("--pattern", required=True)
     a.add_argument("--rule", required=True)

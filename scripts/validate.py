@@ -37,7 +37,6 @@ from image_processing import (
 )
 
 
-DEFAULT_DELIVER_SIZE = "1080x1440"
 DEFAULT_BACKGROUNDS = {"OLD": "#12181D", "NEW": "#091521"}
 
 
@@ -81,7 +80,10 @@ def load_job(path: Path) -> dict:
     if not isinstance(slides, list) or not slides:
         die("job.slides must be a non-empty list")
     size = job.get("size") or {}
-    job["deliver_size"] = size.get("deliver", size.get("target", DEFAULT_DELIVER_SIZE))
+    deliver_size = size.get("deliver")
+    if not isinstance(deliver_size, str) or not deliver_size.strip():
+        die("job.size.deliver is required; there is no default delivery size")
+    job["deliver_size"] = deliver_size
     background = job.get("background") or {}
     job["background_hex"] = background.get("hex", DEFAULT_BACKGROUNDS[identity])
     return job
