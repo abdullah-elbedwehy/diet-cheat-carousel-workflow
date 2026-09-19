@@ -208,7 +208,7 @@ def validate_guillemets(path: Path, source_copy: str, job: dict, size: tuple[int
         result["rtl_order_pass"] = None
         result["orientation_pass"] = None
         result["orientation_reliable"] = False
-        result["status"] = "OCR-ONLY"
+        result["status"] = "PASS (OCR-ONLY)" if result["sequence_pass"] else "FAIL"
     else:
         centers = [float(glyph["x"]) + float(glyph["w"]) / 2 for glyph in glyphs]
         # Vision returns logical source order. In RTL the opening mark is to the
