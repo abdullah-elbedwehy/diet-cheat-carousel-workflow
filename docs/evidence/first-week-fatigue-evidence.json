@@ -1,0 +1,140 @@
+{
+  "tolerance": 12,
+  "source": "/Users/abdullah/Downloads/diet-cheat-carousel-workflow-main/first-week-fatigue/candidates/v2-runs/attempt-2-20260919-1448/first-week-fatigue-01.png",
+  "crop": [
+    100,
+    620,
+    1020,
+    1160
+  ],
+  "flatten": {
+    "width": 1122,
+    "height": 1402,
+    "mode": "RGB",
+    "target": [
+      18,
+      24,
+      29
+    ],
+    "tolerance": 12,
+    "changed_pixels": 1126377,
+    "untouched_outside_tolerance": 217444
+  },
+  "crop_changed_near_navy_pixels": 395110,
+  "crop_non_near_pixels_unchanged": 17066,
+  "crop_changed_non_near_pixels": 0,
+  "real_shield_matches": [
+    {
+      "slide": 1,
+      "matches": [
+        {
+          "box": [
+            72,
+            1168,
+            204,
+            1296
+          ],
+          "score": 0.8932
+        }
+      ]
+    },
+    {
+      "slide": 2,
+      "matches": [
+        {
+          "box": [
+            72,
+            1188,
+            180,
+            1296
+          ],
+          "score": 0.8669
+        }
+      ]
+    },
+    {
+      "slide": 3,
+      "matches": [
+        {
+          "box": [
+            72,
+            1172,
+            224,
+            1320
+          ],
+          "score": 0.9076
+        }
+      ]
+    },
+    {
+      "slide": 4,
+      "matches": [
+        {
+          "box": [
+            76,
+            1128,
+            248,
+            1300
+          ],
+          "score": 0.9385
+        }
+      ]
+    },
+    {
+      "slide": 5,
+      "matches": [
+        {
+          "box": [
+            72,
+            1140,
+            236,
+            1296
+          ],
+          "score": 0.9184
+        }
+      ]
+    },
+    {
+      "slide": 6,
+      "matches": [
+        {
+          "box": [
+            76,
+            1144,
+            228,
+            1300
+          ],
+          "score": 0.8893
+        }
+      ]
+    },
+    {
+      "slide": 7,
+      "matches": [
+        {
+          "box": [
+            76,
+            1144,
+            228,
+            1296
+          ],
+          "score": 0.9058
+        }
+      ]
+    },
+    {
+      "slide": 8,
+      "matches": [
+        {
+          "box": [
+            48,
+            1200,
+            188,
+            1336
+          ],
+          "score": 0.9152
+        }
+      ]
+    }
+  ]
+}

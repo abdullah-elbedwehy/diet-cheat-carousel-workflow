@@ -22,6 +22,8 @@ fi
 mkdir -p "$CODEX_HOME/skills"
 git clone --quiet "$REPO_URL" "$DEST"
 chmod +x "$DEST"/scripts/*.py "$DEST"/scripts/*.sh
+python3 -m venv "$DEST/.venv"
+"$DEST/.venv/bin/python" -m pip install --quiet -r "$DEST/requirements.txt"
 mkdir -p "$DEST/learnings/local"
 
 echo "Installed → $DEST (version $(cat "$DEST/VERSION"))"

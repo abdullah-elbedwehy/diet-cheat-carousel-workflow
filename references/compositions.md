@@ -16,3 +16,21 @@ Rules
 - Latin technical terms (`Pre-workout`, `Bioavailability`) render as isolated LTR tokens on their own line or with clear spacing; never reorder them inside Arabic lines.
 - Score / footer lines (`Coffee: 2 ☕`) sit at the same bottom corner on every slide of a set.
 - Same logo position, margins, lighting, and line system across all slides of a set.
+
+## Reviewed gold assignments
+
+Passed structural assignments:
+
+- a dot at the break of a line chart;
+- the tip of a forking road;
+- one rung of a stepladder;
+- a band marking a missing level on a tank.
+
+Failed assignments:
+
+- a whole balloon;
+- a whole staircase;
+- a whole organ.
+
+Gold is always a small part of the named object. If a scene line makes the
+object itself gold, rewrite the scene before prompt construction.

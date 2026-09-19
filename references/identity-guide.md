@@ -8,7 +8,7 @@ Refs attached to every worker: `assets/OLD-shield-logo.png` (exact mark), `asset
 Extra refs on request only: `assets/OLD-identity-sheet.png` (palette sheet), `assets/client-approved-layout.jpg` (two-choice comparison).
 
 Palette
-- Base: deep navy `#0B1220`→ near-black charcoal `#101418`, matte, subtle grain.
+- Base: exact solid navy `#12181D`, matte, no grain, vignette, gradient, or radial shading.
 - Copy: white.
 - Warning / heavy emphasis / "higher" side: gold-orange `#F2A33A`.
 - Positive / smart / "better" side: cyan-blue `#4FB3E8`.

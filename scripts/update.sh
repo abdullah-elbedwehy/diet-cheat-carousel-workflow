@@ -29,6 +29,11 @@ fi
 after="$(cat VERSION 2>/dev/null || echo unknown)"
 after_sha="$(git rev-parse --short HEAD)"
 
+if [ ! -x .venv/bin/python ]; then
+  python3 -m venv .venv
+fi
+.venv/bin/python -m pip install --quiet -r requirements.txt
+
 if [ "$before_sha" = "$after_sha" ]; then
   echo "Already up to date — version $after ($after_sha)"
   exit 0

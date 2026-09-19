@@ -1,6 +1,6 @@
 ---
 name: diet-cheat-carousel-workflow
-description: Produce Diet & Cheat Egyptian-Arabic Instagram carousel slides from user-supplied final copy, in the OLD shield or NEW hands-and-heart identity. Generates every slide in parallel through codex exec workers, exports to 1080x1440, saves to a folder in ~/Downloads, and never reviews images itself. Use when the user supplies slide text and says OLD or NEW, asks to regenerate a slide, gives feedback on a slide, or says "pull latest update".
+description: Produce Diet & Cheat Egyptian-Arabic Instagram carousel slides from user-supplied final copy, in the OLD shield or NEW hands-and-heart identity. Generates every slide in parallel, exports to the exact declared size, runs deterministic raster validation, and leaves aesthetic review to the user.
 ---
 
 # Diet & Cheat Carousel — direct production
@@ -23,7 +23,9 @@ You turn the user's locked slide copy into image prompts, run the parallel gener
 ## Hard rules
 
 - Copy is locked. Every character the user supplied renders as-is. You never rewrite, fix, translate, shorten, reorder, or add text.
-- No visual review. Never open, view, describe, score, or judge a generated image. Never regenerate on your own initiative.
+- No aesthetic review. Never describe, score, or judge how a generated image looks. Deterministic image processing is allowed: exact resize verification, near-navy pixel flattening, pixel samples, REF-01 template matching, and OCR. These checks do not change this rule.
+- `scripts/generate.py` is the only valid image-producing path. Never call Imagegen directly from the outer agent, even when the brief asks for parallel generation. A folder of images without the runner's `job.json`, `prompts.md`, `manifest.json`, `logs/`, `source/`, and passing `run-verification.json` is a failed/bypassed run, not a delivery.
+- Never pass `--concurrency` unless the user explicitly asks for a concurrency cap. The default is the full selected worker count.
 - Ask only for a missing identity or a missing slide's text. Nothing else.
 - One identity per run. Never mix OLD and NEW marks.
 - Never publish, upload, or message externally.
@@ -32,17 +34,18 @@ You turn the user's locked slide copy into image prompts, run the parallel gener
 
 1. Parse the brief: identity, slides in order, per-slide copy, optional visual notes / size / extra refs. Missing identity or slide text → ask for exactly that and stop.
 2. Lessons: `python3 <skill>/scripts/learn.py list --rules-only --identity <ID>`.
-3. Read `references/identity-guide.md`, `references/compositions.md`, `references/prompt-contract.md`. Classify each slide's role from its content shape. Write `shared_contract` and each slide's `visual` per the contract. Paste the lesson rules under `LEARNED RULES` and list their ids in `lessons_applied`.
-4. Write `job.json` in the current working directory. Schema and slug rules: `references/workflow.md`.
+3. Read `references/identity-guide.md`, `references/compositions.md`, `references/prompt-contract.md`, and `references/render-spec.md`. Put `render-spec.md` byte-for-byte in `shared_contract`. Classify each slide's role and write separate `intent`, `subject`, and one-line `visual` fields.
+4. Before any generation, reject any scene line that makes a whole object gold. Rewrite it as one small object part: dot, tip, handle, rung, step, or band. Write schema-2 `job.json` using `references/workflow.md`.
 5. Run: `python3 <skill>/scripts/generate.py job.json`
    All slides dispatch at once. Wait for the script to finish. Do not run image generation yourself.
-6. Report: the output folder path (in `~/Downloads`), the script's status table, and one line: the user reviews now via `REVIEW.md`. Nothing about how the images look.
+6. Require `mechanical-validation.json` and `run-verification.json` to pass. Confirm exact dimensions, RGB/no alpha, exact five background samples, shield check, guillemet status, and dispatch proof. A mechanical failure triggers one automatic whole-slide regeneration. Never patch a raster.
+7. Report: the output folder path (in `~/Downloads`), the script's status table, dispatch proof, and one line: the user reviews now via `REVIEW.md`. Nothing about how the images look.
 
 ## Regenerate
 
-User names slide(s). If they gave a reason, record the lesson first (§Learn). Rewrite only those slides' `visual` to apply the rule. Then:
+User names slide(s). Record `regeneration.reason` and `regeneration.failure_class`, then record the lesson when reusable. Keep `intent` byte-identical. Keep `subject` byte-identical unless the failure class is exactly `object`. Change only the visual detail required by the reason. Then:
 `python3 <skill>/scripts/generate.py job.json --only 3,5 --output-dir <same output folder>`
-Report as in step 6. Previous versions are moved to `history/` automatically.
+Report as in step 7. Previous versions are moved to `history/` automatically.
 
 ## Learn
 
@@ -60,5 +63,7 @@ Rules and format: `references/learning.md`. Confirm the lesson id to the user in
 - `references/identity-guide.md` — palettes, marks, shared visual language.
 - `references/compositions.md` — slide role → layout.
 - `references/prompt-contract.md` — how to write `shared_contract` and `visual`.
+- `references/render-spec.md` — exact output, flattening, shield, gold, and regeneration contract.
 - `references/learning.md` — lesson lifecycle.
+- `scripts/verify_run.py` — rejects bypassed runs and full-parallel runs whose worker-start spread exceeds the documented threshold.
 - `assets/` — logos and finish references attached to workers.
